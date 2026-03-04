@@ -1,11 +1,13 @@
 body {
     margin: 0;
-    overflow: hidden; /* Hides scrollbars */
+    overflow: hidden;
     background: #000;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none; /* Prevents text highlighting while rapidly clicking */
 }
 
-#ui-layer {
+/* Screen Overlays */
+.screen {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -13,7 +15,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: rgba(15, 23, 42, 0.85);
+    background-color: rgba(15, 23, 42, 0.9);
     color: white;
     z-index: 10;
 }
@@ -23,6 +25,7 @@ h1 {
     font-size: 4rem;
     margin: 0 0 10px 0;
     text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+    letter-spacing: 2px;
 }
 
 p {
@@ -31,9 +34,11 @@ p {
 }
 
 .blink {
-    margin-top: 30px;
+    margin-top: 40px;
     color: #fbbf24;
-    animation: blinker 1.5s linear infinite;
+    font-weight: bold;
+    font-size: 1.5rem;
+    animation: blinker 1.2s linear infinite;
     cursor: pointer;
 }
 
@@ -41,28 +46,39 @@ p {
     50% { opacity: 0; }
 }
 
+/* In-Game UI */
 #crosshair {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 6px;
     height: 6px;
-    background: #38bdf8;
+    background: #00ff88;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     display: none;
     z-index: 5;
-    box-shadow: 0 0 8px #38bdf8;
+    box-shadow: 0 0 8px #00ff88;
 }
 
-#scoreboard {
+#hud {
     position: absolute;
     top: 20px;
     left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 5;
+    display: none;
+}
+
+.stat {
     color: #38bdf8;
     font-size: 2rem;
     font-weight: bold;
-    z-index: 5;
-    display: none;
     text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    background: rgba(15, 23, 42, 0.6);
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #38bdf8;
 }

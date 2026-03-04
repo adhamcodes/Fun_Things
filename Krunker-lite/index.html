@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reflex Striker 3D | Professional Build</title>
+    <title>Reflex Striker 3D | V2</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="crosshair"></div>
     
-    <div id="scoreboard">
-        SCORE: <span id="score-val">0</span>
+    <div id="hud">
+        <div class="stat">TIME: <span id="timer-val">30</span>s</div>
+        <div class="stat">SCORE: <span id="score-val">0</span></div>
     </div>
 
-    <div id="ui-layer">
+    <div id="ui-layer" class="screen">
         <h1>REFLEX STRIKER 3D</h1>
         <p>WASD to Move | MOUSE to Look | SPACE to Jump | LEFT CLICK to Shoot</p>
-        <p class="blink">CLICK ANYWHERE TO DEPLOY</p>
+        <p class="blink">CLICK TO INITIATE TRAINING</p>
+    </div>
+
+    <div id="game-over-layer" class="screen" style="display: none;">
+        <h1>SESSION COMPLETE</h1>
+        <p>FINAL SCORE: <span id="final-score">0</span></p>
+        <p class="blink">CLICK TO RESTART</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

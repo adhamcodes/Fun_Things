@@ -1,57 +1,85 @@
-// --- 1. GLOBAL VARIABLES ---
+// --- 1. GLOBAL VARIABLES & STATE ---
 let camera, scene, renderer, controls;
 let prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
 let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = false;
 
-// Shooting & Score Mechanics
+// Game Logic
 let score = 0;
+let timeLeft = 30;
+let gameInterval;
+let gameState = 'menu'; // 'menu', 'playing', 'gameover'
+let lastFireTime = 0;
+const fireRate = 200; // Milliseconds between shots
+
+// Raycaster (Shooting)
 const raycaster = new THREE.Raycaster();
-const screenCenter = new THREE.Vector2(0, 0); // Center of screen for crosshair
+const screenCenter = new THREE.Vector2(0, 0); 
+let targets = []; // Keep track of targets so we can respawn them
+
+// DOM Elements
+const uiLayer = document.getElementById('ui-layer');
+const gameOverLayer = document.getElementById('game-over-layer');
+const crosshair = document.getElementById('crosshair');
+const hud = document.getElementById('hud');
+const scoreVal = document.getElementById('score-val');
+const timerVal = document.getElementById('timer-val');
+const finalScoreVal = document.getElementById('final-score');
 
 init();
 animate();
 
 // --- 2. INITIALIZATION ---
 function init() {
-    // Setup Scene and Camera
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f172a); // Dark sky
-    scene.fog = new THREE.Fog(0x0f172a, 0, 750);
+    scene.background = new THREE.Color(0x0a0f1c);
+    scene.fog = new THREE.Fog(0x0a0f1c, 0, 500);
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.y = 10;
 
-    // Add Lighting
     const light = new THREE.HemisphereLight(0xffffff, 0x444455, 0.8);
     light.position.set(0.5, 1, 0.75);
     scene.add(light);
 
-    // Setup Controls
     controls = new THREE.PointerLockControls(camera, document.body);
-    const uiLayer = document.getElementById('ui-layer');
-    const crosshair = document.getElementById('crosshair');
-    const scoreboard = document.getElementById('scoreboard');
+    scene.add(controls.getObject());
 
-    // UI Interaction
-    uiLayer.addEventListener('click', () => controls.lock());
+    // --- STATE MANAGEMENT ---
+    const startOrRestartGame = () => {
+        if (gameState === 'playing') return;
+        resetGame();
+        controls.lock(); // Traps the mouse
+    };
+
+    uiLayer.addEventListener('click', startOrRestartGame);
+    gameOverLayer.addEventListener('click', startOrRestartGame);
     
     controls.addEventListener('lock', () => {
+        gameState = 'playing';
         uiLayer.style.display = 'none';
+        gameOverLayer.style.display = 'none';
         crosshair.style.display = 'block';
-        scoreboard.style.display = 'block';
+        hud.style.display = 'flex';
+        
+        // Start the countdown
+        clearInterval(gameInterval);
+        gameInterval = setInterval(updateTimer, 1000);
     });
     
     controls.addEventListener('unlock', () => {
-        uiLayer.style.display = 'flex';
-        crosshair.style.display = 'none';
-        scoreboard.style.display = 'none';
+        if (gameState === 'playing') {
+            // Player pressed ESC manually
+            clearInterval(gameInterval);
+            uiLayer.style.display = 'flex';
+            crosshair.style.display = 'none';
+            hud.style.display = 'none';
+            gameState = 'menu';
+        }
     });
-    
-    scene.add(controls.getObject());
 
-    // Keyboard Listeners for Movement
+    // Keyboard Listeners
     document.addEventListener('keydown', (e) => {
         switch (e.code) {
             case 'KeyW': moveForward = true; break;
@@ -61,7 +89,6 @@ function init() {
             case 'Space': if (canJump) velocity.y += 350; canJump = false; break;
         }
     });
-    
     document.addEventListener('keyup', (e) => {
         switch (e.code) {
             case 'KeyW': moveForward = false; break;
@@ -71,32 +98,20 @@ function init() {
         }
     });
 
-    // --- 3. WORLD GENERATION ---
-    // Floor
-    const floorGeo = new THREE.PlaneGeometry(2000, 2000, 50, 50);
+    // --- WORLD GENERATION ---
+    const floorGeo = new THREE.PlaneGeometry(1000, 1000, 20, 20);
     floorGeo.rotateX(-Math.PI / 2);
     const floorMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, wireframe: true });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     scene.add(floor);
 
-    // Targets
-    const boxGeo = new THREE.BoxGeometry(15, 15, 15);
-    const boxMat = new THREE.MeshPhongMaterial({ color: 0xfbbf24 }); // Yellow targets
-    for (let i = 0; i < 40; i++) {
-        const box = new THREE.Mesh(boxGeo, boxMat);
-        box.position.x = Math.floor(Math.random() * 20 - 10) * 20;
-        box.position.y = 10;
-        box.position.z = Math.floor(Math.random() * 20 - 10) * 20;
-        scene.add(box);
-    }
+    spawnTargets(30);
 
-    // Setup Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Handle Window Resize
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -104,37 +119,96 @@ function init() {
     });
 }
 
-// --- 4. SHOOTING MECHANIC (RAYCASTING) ---
+// --- 3. GAME LOGIC ---
+function spawnTargets(count) {
+    const boxGeo = new THREE.BoxGeometry(12, 12, 12);
+    const boxMat = new THREE.MeshPhongMaterial({ color: 0xfbbf24 });
+    
+    for (let i = 0; i < count; i++) {
+        const box = new THREE.Mesh(boxGeo, boxMat);
+        // Ensure they don't spawn exactly on the player (0,0,0)
+        let x = Math.floor(Math.random() * 400 - 200);
+        let z = Math.floor(Math.random() * 400 - 200);
+        if (Math.abs(x) < 30) x += 50; 
+        if (Math.abs(z) < 30) z += 50;
+
+        box.position.set(x, 10, z);
+        scene.add(box);
+        targets.push(box);
+    }
+}
+
+function resetGame() {
+    score = 0;
+    timeLeft = 30;
+    scoreVal.innerText = score;
+    timerVal.innerText = timeLeft;
+    
+    // Clear old targets and spawn new ones
+    targets.forEach(t => scene.remove(t));
+    targets = [];
+    spawnTargets(30);
+    
+    // Reset player position
+    controls.getObject().position.set(0, 10, 0);
+}
+
+function updateTimer() {
+    timeLeft--;
+    timerVal.innerText = timeLeft;
+    if (timeLeft <= 0) {
+        endSession();
+    }
+}
+
+function endSession() {
+    gameState = 'gameover';
+    clearInterval(gameInterval);
+    controls.unlock(); // Frees the mouse
+    crosshair.style.display = 'none';
+    hud.style.display = 'none';
+    gameOverLayer.style.display = 'flex';
+    finalScoreVal.innerText = score;
+}
+
+// --- 4. COMBAT MECHANICS ---
 window.addEventListener('mousedown', () => {
-    if (!controls.isLocked) return;
+    if (gameState !== 'playing') return;
+
+    const now = performance.now();
+    if (now - lastFireTime < fireRate) return; // WEAPON COOLDOWN LOGIC
+    lastFireTime = now;
 
     raycaster.setFromCamera(screenCenter, camera);
-    const intersects = raycaster.intersectObjects(scene.children);
+    const intersects = raycaster.intersectObjects(targets);
 
-    for (let i = 0; i < intersects.length; i++) {
-        if (intersects[i].object.geometry.type === 'BoxGeometry') {
-            scene.remove(intersects[i].object); // Destroy target
-            score++; // Increment score
-            document.getElementById('score-val').innerText = score; // Update UI
-            break; // Stop bullet from piercing multiple targets
-        }
+    if (intersects.length > 0) {
+        const hitObject = intersects[0].object;
+        
+        // Remove from scene and array
+        scene.remove(hitObject);
+        targets = targets.filter(t => t !== hitObject);
+        
+        score++;
+        scoreVal.innerText = score;
+
+        // Immediately spawn a new target somewhere else to keep the arena full
+        spawnTargets(1);
     }
 });
 
-// --- 5. THE GAME LOOP (PHYSICS) ---
+// --- 5. THE PHYSICS ENGINE ---
 function animate() {
     requestAnimationFrame(animate);
 
-    if (controls.isLocked) {
+    if (gameState === 'playing' && controls.isLocked) {
         const time = performance.now();
         const delta = (time - prevTime) / 1000;
 
-        // Friction & Gravity
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
         velocity.y -= 9.8 * 100.0 * delta;
 
-        // WASD Movement Math
         direction.z = Number(moveForward) - Number(moveBackward);
         direction.x = Number(moveRight) - Number(moveLeft);
         direction.normalize();
@@ -146,13 +220,14 @@ function animate() {
         controls.moveForward(-velocity.z * delta);
         controls.getObject().position.y += (velocity.y * delta);
 
-        // Floor Collision
         if (controls.getObject().position.y < 10) {
             velocity.y = 0;
             controls.getObject().position.y = 10;
             canJump = true;
         }
         prevTime = time;
+    } else {
+        prevTime = performance.now(); // Prevents physics exploding when unpaused
     }
     renderer.render(scene, camera);
 }
