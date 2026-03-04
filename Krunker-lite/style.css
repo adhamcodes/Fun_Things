@@ -1,0 +1,68 @@
+body {
+    margin: 0;
+    overflow: hidden; /* Hides scrollbars */
+    background: #000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#ui-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(15, 23, 42, 0.85);
+    color: white;
+    z-index: 10;
+}
+
+h1 {
+    color: #38bdf8;
+    font-size: 4rem;
+    margin: 0 0 10px 0;
+    text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+
+p {
+    color: #94a3b8;
+    font-size: 1.2rem;
+}
+
+.blink {
+    margin-top: 30px;
+    color: #fbbf24;
+    animation: blinker 1.5s linear infinite;
+    cursor: pointer;
+}
+
+@keyframes blinker {
+    50% { opacity: 0; }
+}
+
+#crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    background: #38bdf8;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    z-index: 5;
+    box-shadow: 0 0 8px #38bdf8;
+}
+
+#scoreboard {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #38bdf8;
+    font-size: 2rem;
+    font-weight: bold;
+    z-index: 5;
+    display: none;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
