@@ -1,0 +1,73 @@
+:root {
+    --primary: #38bdf8;
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --accent: #fbbf24;
+}
+
+body {
+    background-color: var(--bg);
+    color: white;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    height: 100vh;
+}
+
+.game-header {
+    text-align: center;
+    padding: 20px;
+}
+
+.stats-bar {
+    display: flex;
+    gap: 40px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+#game-arena {
+    position: relative;
+    width: 800px;
+    height: 500px;
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+#start-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+button {
+    padding: 15px 30px;
+    background: var(--primary);
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+.target {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--accent);
+    cursor: pointer;
+}
