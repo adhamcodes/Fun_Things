@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflex Striker</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            background: #1e293b;
+            border: 3px solid #38bdf8;
+            border-radius: 15px;
+            cursor: crosshair;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+        .target {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #fbbf24, #f59e0b);
+            border-radius: 50%;
+            box-shadow: 0 0 15px #fbbf24;
+            transition: transform 0.1s ease;
+        }
+        .target:active { transform: scale(0.8); }
+        .stats { margin-bottom: 20px; font-size: 1.5rem; font-weight: bold; }
+        .btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stats">Score: <span id="score">0</span> | Time: <span id="timer">30</span>s</div>
+    
+    <div id="game-container">
+        </div>
+
+    <button class="btn" onclick="startGame()">Start Training</button>
+
+    <script>
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        const container = document.getElementById('game-container');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+
+        function startGame() {
+            if (gameActive) return;
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            scoreEl.innerText = score;
+            timerEl.innerText = timeLeft;
+            
+            spawnTarget();
+            
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    gameActive = false;
+                    container.innerHTML = "";
+                    alert("Game Over! Final Score: " + score);
+                }
+            }, 1000);
+        }
+
+        function spawnTarget() {
+            if (!gameActive) return;
+            container.innerHTML = "";
+            const target = document.createElement('div');
+            target.className = 'target';
+            
+            // Randomly position the target inside the container
+            const x = Math.random() * (container.offsetWidth - 50);
+            const y = Math.random() * (container.offsetHeight - 50);
+            
+            target.style.left = x + 'px';
+            target.style.top = y + 'px';
+            
+            target.onclick = () => {
+                score++;
+                scoreEl.innerText = score;
+                spawnTarget(); // Move to next spot
+            };
+            
+            container.appendChild(target);
+        }
+    </script>
+</body>
+</html>
