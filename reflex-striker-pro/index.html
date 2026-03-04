@@ -9,16 +9,18 @@
 <body>
 
     <div class="game-header">
-        <h1>REFLEX STRIKER <span class="version">v1.0</span></h1>
+        <h1>REFLEX STRIKER <span class="version">v2.0 (Canvas Engine)</span></h1>
         <div class="stats-bar">
             <div class="stat">SCORE: <span id="score">0</span></div>
             <div class="stat">TIME: <span id="timer">30</span>s</div>
         </div>
     </div>
     
-    <div id="game-arena">
-        <div id="start-screen">
-            <button id="start-btn">INITIALIZE TRAINING</button>
+    <div id="canvas-container" style="position: relative; display: flex; justify-content: center;">
+        <canvas id="gameCanvas" width="800" height="500" style="background: #1e293b; border: 2px solid #38bdf8; border-radius: 8px; cursor: crosshair;"></canvas>
+        
+        <div id="start-screen" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            <button id="start-btn">INITIALIZE ENGINE</button>
         </div>
     </div>
 
